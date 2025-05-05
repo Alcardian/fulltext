@@ -50,4 +50,84 @@ fn convert_text(input: &str) -> String {
     result
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Happy flow test: mixed bullet points, continuation lines, and blank lines.
+    #[test]
+    fn test_convert_text_happy_flow() {
+        let input = "\
+* 1st line.
+  * Still 1st line. *italic text*,
+  * and some more text.
+* Here's the 2nd line. **BOLD**
+
+* Here's the 3rd line.
+*
+* 4th line is empty, so this is the 5th line.";
+        let expected = "\
+1st line. Still 1st line. *italic text*, and some more text.
+Here's the 2nd line. **BOLD**
+Here's the 3rd line.
+
+4th line is empty, so this is the 5th line.";
+        let result = convert_text(input);
+        assert_eq!(result, expected);
+    }
+
+    // Test continuation line: a bullet point followed by an indented line.
+    #[test]
+    fn test_continuation_line() {
+        let input = "* First bullet\n  * continuation line";
+        let expected = "First bullet continuation line";
+        let result = convert_text(input);
+        assert_eq!(result, expected);
+    }
+
+    // Test a line that contains only a "*" which should produce a newline.
+    #[test]
+    fn test_line_with_only_star() {
+        let input = "*";
+        let expected = "\n";
+        let result = convert_text(input);
+        assert_eq!(result, expected);
+    }
+
+    // Test that blank lines are ignored.
+    #[test]
+    fn test_blank_lines_ignored() {
+        let input = "* Bullet one\n\n* Bullet two\n\n* Bullet three ";
+        let expected = "Bullet one\nBullet two\nBullet three";
+        let result = convert_text(input);
+        assert_eq!(result, expected);
+    }
+
+    // Test that lines without a bullet or an indented bullet are ignored.
+    #[test]
+    fn test_normal_text_ignored() {
+        let input = "Normal line\nAnother normal line";
+        let expected = "";  // Since these lines don't match any condition, they are omitted.
+        let result = convert_text(input);
+        assert_eq!(result, expected);
+    }
+
+    // Test that extra spaces after the bullet marker are trimmed.
+    #[test]
+    fn test_extra_spaces_in_bullet() {
+        let input = "*   Extra spaces text  ";
+        let expected = "Extra spaces text";
+        let result = convert_text(input);
+        assert_eq!(result, expected);
+    }
+	
+	#[test]
+	fn test_line_without_star_is_ignored() {
+		let input = "* Valid 1\nInvalid\n* Valid \n  * 2 ";
+		let expected = "Valid 1\nValid 2";
+		let result = convert_text(input);
+		assert_eq!(result, expected);
+	}
+}
+
 
