@@ -1,25 +1,17 @@
 use arboard::Clipboard;
 
 fn main() {
-    println!("Hello, world!");
-	
-	// Match: expression handles both successful and error outcomes from calling read_clipboard()
-	match read_clipboard() {
-        Ok(text) => {
-            println!("Clipboard text: {}", text);
-            println!("Converted text:\n{}", convert_text(&text));
-        }
-        Err(e) => eprintln!("Failed to read clipboard: {}", e),
-    }
-}
-
-fn read_clipboard() -> Result<String, Box<dyn std::error::Error>> {
     // Create a new, mutable clipboard instance.
-    // The '?' operator returns an error if creation fails.
-    let mut clipboard = Clipboard::new()?;
+    let mut clipboard = Clipboard::new().expect("Failed to create clipboard");
+    
+    // Retrieve the current clipboard text.
+    let text = clipboard.get_text().expect("Failed to get clipboard text");
 	
-    // Retrieve and return the clipboard text.
-    Ok(clipboard.get_text()?)
+	// Convert the text.
+    let converted_text = convert_text(&text);
+	
+	// Copy the converted text back into the clipboard.
+    clipboard.set_text(converted_text).expect("Failed to set clipboard text");
 }
 
 fn convert_text(input: &str) -> String {
@@ -37,9 +29,8 @@ fn convert_text(input: &str) -> String {
         // If the line starts with spaces (indicating an indented line)
         if line.starts_with(' ') && line.contains('*') {
             if let Some(idx) = line.find('*') {
-                let content = line[idx + 1..].trim();
                 result.push(' ');
-                result.push_str(content);
+                result.push_str(line[idx + 1..].trim());
                 continue;
             }
         }
@@ -50,8 +41,7 @@ fn convert_text(input: &str) -> String {
             if !result.is_empty() {
                 result.push('\n');
             }
-            let content = trimmed.trim_start_matches("* ").trim();
-            result.push_str(content);
+            result.push_str(trimmed.trim_start_matches("* ").trim());
         } else if trimmed == "*" {
             result.push('\n');
         }
