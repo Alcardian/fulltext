@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 arboard = "3.5"
 
+[target.'cfg(windows)'.dependencies]
+clipboard-win = "5.4"
+
