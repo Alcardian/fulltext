@@ -24,6 +24,7 @@ cargo run --release
 ```
 
 # Manual Test Data
+```
 * 1st line.
     * Still 1st line. *italic text*,
     * and some more text.
@@ -32,10 +33,13 @@ cargo run --release
 * Here's the 3rd line.
 *
 * 4th line is empty, so this is the 5th line.
+```
 
 ## Expected Result
+```
 1st line. Still 1st line. *italic text*, and some more text.
 Here's the 2nd line. **BOLD**
 Here's the 3rd line.
 
 4th line is empty, so this is the 5th line.
+```
