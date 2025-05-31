@@ -2,16 +2,17 @@
 Originally a rewrite of a script I created to convert text for me from "Bulletpoint Format" to "Full Text".  
 Now able to copy "bulletpoint format" and paste "full text" with styling included directly into Libre Office Writer.
 
-# Running the Program
+# Requirements For Running The Program
 ## Linux
-* Requires xclip.
+* Requires: xclip
   * Can be installed with "sudo pacman -S xclip" on arch.
 
 ## Windows
-* Only 1.0.0 version tested on Windows.
+* Requires: nothing (can run out of the box)
 
 ## MacOS
-* Untested.
+* Requires: ?
+* Untested. Most likely doesn't work.
 
 # Developing
 ## Development Build

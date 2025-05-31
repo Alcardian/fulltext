@@ -1,6 +1,12 @@
 use arboard::Clipboard;
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::io::Write;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::process::{Command, Stdio};
+
+#[cfg(target_os = "windows")]
+use clipboard_win::{Clipboard as WinClipboard, formats::Html, set_clipboard};
 
 fn main() {
   // Create a new, mutable clipboard instance.
@@ -40,11 +46,9 @@ fn main() {
   }
   #[cfg(target_os = "windows")]
   {
-    // Use the clipboard-win crate
-    use clipboard_win::{formats, Clipboard};
-    let _ = Clipboard::new().and_then(|clip| {
-      formats::Html::set(html.as_bytes())
-    }).expect("Failed to set Windows HTML clipboard");
+    let _clip = WinClipboard::new().expect("Failed to open Windows clipboard");
+    let html_fmt = Html::new().expect("Failed to register HTML clipboard format");
+    set_clipboard(html_fmt, &html).expect("Failed to set Windows HTML clipboard");
   }
 }
 
