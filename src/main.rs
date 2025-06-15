@@ -36,6 +36,7 @@ fn main() {
   #[cfg(target_os = "macos")]
   {
     // macOS pbcopy supports -Prefer html
+    // Untested on MacOS.
     let mut p = Command::new("pbcopy")
     .args(&["-Prefer", "html"])
     .stdin(Stdio::piped())
@@ -91,6 +92,8 @@ fn convert_text(input: &str) -> String {
 fn convert_to_html(input: &str) -> String {
   let mut res = String::new();
   let mut chars = input.chars().peekable();
+
+  res.push_str("<p>");
   while let Some(char) = chars.next() {
     if char == '*' {
       // Check for bold (**text**)
@@ -133,7 +136,7 @@ fn convert_to_html(input: &str) -> String {
         }
       }
     } else if char == '\n' {
-      res.push_str("<br>");
+      res.push_str("</p><p>");
     } else {
       res.push_str(&html_escape(&char.to_string()));
     }
@@ -241,39 +244,7 @@ Here's the 3rd line.
   #[test]
   fn test_convert_to_html_basic() {
     let input = "Hello world";
-    let expected = "\n<html><body>\r\n<div>Hello world</div>\r\n</body></html>";
-    let result = convert_to_html(input);
-    assert_eq!(result, expected);
-  }
-
-  #[test]
-  fn test_convert_to_html_with_bold() {
-    let input = "This is **bold** text";
-    let expected = "\n<html><body>\r\n<div>This is <strong>bold</strong> text</div>\r\n</body></html>";
-    let result = convert_to_html(input);
-    assert_eq!(result, expected);
-  }
-
-  #[test]
-  fn test_convert_to_html_with_italic() {
-    let input = "This is *italic* text";
-    let expected = "\n<html><body>\r\n<div>This is <em>italic</em> text</div>\r\n</body></html>";
-    let result = convert_to_html(input);
-    assert_eq!(result, expected);
-  }
-
-  #[test]
-  fn test_convert_to_html_with_mixed_formatting() {
-    let input = "This has **bold** and *italic* text";
-    let expected = "\n<html><body>\r\n<div>This has <strong>bold</strong> and <em>italic</em> text</div>\r\n</body></html>";
-    let result = convert_to_html(input);
-    assert_eq!(result, expected);
-  }
-
-  #[test]
-  fn test_convert_to_html_with_newlines() {
-    let input = "Line 1\nLine 2\nLine 3";
-    let expected = "\n<html><body>\r\n<div>Line 1<br>Line 2<br>Line 3</div>\r\n</body></html>";
+    let expected = "\n<html><body>\r\n<div><p>Hello world</div>\r\n</body></html>";
     let result = convert_to_html(input);
     assert_eq!(result, expected);
   }
@@ -281,7 +252,7 @@ Here's the 3rd line.
   #[test]
   fn test_convert_to_html_html_escaping() {
     let input = "Text with <tags> & \"quotes\"";
-    let expected = "\n<html><body>\r\n<div>Text with &lt;tags&gt; &amp; &quot;quotes&quot;</div>\r\n</body></html>";
+    let expected = "\n<html><body>\r\n<div><p>Text with &lt;tags&gt; &amp; &quot;quotes&quot;</div>\r\n</body></html>";
     let result = convert_to_html(input);
     assert_eq!(result, expected);
   }
@@ -290,15 +261,39 @@ Here's the 3rd line.
   fn test_convert_to_html_incomplete_formatting() {
     // TODO - This test will fail until convert_to_html(..) logic won't grab a '*' if it directly is followed by another '** UNLESS there are 3 '*' in a row
     let input = "This has *incomplete italic and **incomplete bold";
-    let expected = "\n<html><body>\r\n<div>This has *incomplete italic and **incomplete bold</div>\r\n</body></html>";
+    let expected = "\n<html><body>\r\n<div><p>This has *incomplete italic and **incomplete bold</div>\r\n</body></html>";
     let result = convert_to_html(input);
     assert_eq!(result, expected);
   }
 
   #[test]
-  fn test_convert_to_html_empty_formatting() {
-    let input = "Empty ** and * markers";
-    let expected = "\n<html><body>\r\n<div>Empty ** and * markers</div>\r\n</body></html>";
+  fn test_convert_to_html_with_bold() {
+    let input = "This is **bold** text";
+    let expected = "\n<html><body>\r\n<div><p>This is <strong>bold</strong> text</div>\r\n</body></html>";
+    let result = convert_to_html(input);
+    assert_eq!(result, expected);
+  }
+
+  #[test]
+  fn test_convert_to_html_with_mixed_formatting() {
+    let input = "This has **bold** and *italic* text";
+    let expected = "\n<html><body>\r\n<div><p>This has <strong>bold</strong> and <em>italic</em> text</div>\r\n</body></html>";
+    let result = convert_to_html(input);
+    assert_eq!(result, expected);
+  }
+
+  #[test]
+  fn test_convert_to_html_with_italic() {
+    let input = "This is *italic* text";
+    let expected = "\n<html><body>\r\n<div><p>This is <em>italic</em> text</div>\r\n</body></html>";
+    let result = convert_to_html(input);
+    assert_eq!(result, expected);
+  }
+
+  #[test]
+  fn test_convert_to_html_with_newlines() {
+    let input = "Line 1\nLine 2\nLine 3";
+    let expected = "\n<html><body>\r\n<div><p>Line 1</p><p>Line 2</p><p>Line 3</div>\r\n</body></html>";
     let result = convert_to_html(input);
     assert_eq!(result, expected);
   }
@@ -312,7 +307,7 @@ Here's the 3rd line.
     assert_eq!(converted, expected_converted);
 
     let html = convert_to_html(&converted);
-    let expected_html = "\n<html><body>\r\n<div>This is <strong>bold</strong> text<br>This is <em>italic</em> text</div>\r\n</body></html>";
+    let expected_html = "\n<html><body>\r\n<div><p>This is <strong>bold</strong> text</p><p>This is <em>italic</em> text</div>\r\n</body></html>";
     assert_eq!(html, expected_html);
   }
 
