@@ -1,8 +1,9 @@
 use arboard::Clipboard;
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-use std::io::Write;
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_os = "linux")]
+use arboard::SetExtLinux;
+
+#[cfg(any(target_os = "macos"))]
 use std::process::{Command, Stdio};
 
 #[cfg(target_os = "windows")]
@@ -12,26 +13,15 @@ fn main() {
   // Create a new, mutable clipboard instance.
   let mut clipboard = Clipboard::new().expect("Failed to create clipboard");
   let text = clipboard.get_text().expect("Failed to get clipboard text");
+
+  // Cleanup and convert Text
   let converted_text = convert_text(&text);
   let html = convert_to_html(&converted_text);
-  clipboard.set_text(&converted_text).expect("Failed to set clipboard text");
 
   // Set the HTML based on OS
   #[cfg(target_os = "linux")]
   {
-    // Requires xclip installed
-    let mut p = Command::new("xclip")
-    .args(&["-selection", "clipboard", "-t", "text/html"])
-    .stdin(Stdio::piped())
-    .spawn()
-    .expect("xclip spawn failed: ensure xclip is installed");
-    let stdin = p.stdin.as_mut().expect("Failed to open xclip stdin");
-    stdin.write_all(html.as_bytes()).expect("Failed to write to xclip stdin");
-    stdin.flush().expect("Failed to flush xclip stdin");
-    let status = p.wait().expect("xclip process failed to complete");
-    if !status.success() {
-      panic!("xclip exited with error: {}", status);
-    }
+    clipboard.set().wait().html(&html, Some(&converted_text)).expect("Failed to set clipboard HTML");
   }
   #[cfg(target_os = "macos")]
   {
@@ -54,10 +44,17 @@ fn main() {
 }
 
 fn convert_text(input: &str) -> String {
-  let mut result = String::new();
+  let lines: Vec<&str> = input.lines().collect();
 
+  // Legacy format is identified by actual bullet lines.
+  let is_legacy = lines.iter().any(|line| {
+      let trimmed = line.trim_start();
+      trimmed == "*" || trimmed.starts_with("* ")
+  });
+
+  let mut result = String::new();
   for line in input.lines() {
-    // Use only trailing trim so we keep leading whitespace for detection.
+    // Use only trailing trim so we keep leading whitespace for legacy format detection.
     let line = line.trim_end();
 
     // Check if the line is completely blank after full trim.
@@ -74,9 +71,10 @@ fn convert_text(input: &str) -> String {
       }
     }
 
-    // Now check for bullet points at the start (ignoring leading whitespace)
+    // For legacy, check for bullet points at the start (ignoring leading whitespace)
+    // For non-legacy just let through, there are no line combinations for it.
     let trimmed = line.trim_start();
-    if trimmed.starts_with("* ") {
+    if !is_legacy || trimmed.starts_with("* ") {
       if !result.is_empty() {
         result.push('\n');
       }

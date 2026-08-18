@@ -4,8 +4,7 @@ Now able to copy "bulletpoint format" and paste "full text" with styling include
 
 # Requirements For Running The Program
 ## Linux
-* Requires: xclip
-  * Can be installed with "sudo pacman -S xclip" on arch.
+* Requires: None
 
 ## Windows
 * Requires: nothing (can run out of the box)
